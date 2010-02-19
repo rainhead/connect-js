@@ -98,7 +98,7 @@ FB.provide('Dom', {
     if (FB.Dom.getBrowserType() != 'ie') {
       style = document.createElement('style');
       style.type = "text/css";
-      style.innerHTML = styles;
+      style.textContent = styles;
       document.getElementsByTagName('HEAD')[0].appendChild(style);
     } else {
       var
