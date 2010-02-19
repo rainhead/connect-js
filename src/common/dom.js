@@ -124,8 +124,8 @@ FB.provide('Dom', {
       var
         userAgent = window.navigator.userAgent.toLowerCase(),
         // list of known browser. NOTE: the order is important
-        keys = ['msie', 'firefox', 'gecko',   'safari'],
-        names = ['ie',  'mozilla', 'mozilla', 'safari'];
+        keys = ['msie', 'firefox', 'safari', 'gecko'],
+        names = ['ie',  'mozilla', 'safari', 'mozilla'];
       for (var i = 0; i < keys.length; i++) {
         if (userAgent.indexOf(keys[i]) >= 0) {
           FB.Dom._browserType = names[i];
