@@ -98,7 +98,7 @@ FB.provide('Dom', {
     if (FB.Dom.getBrowserType() != 'ie') {
       style = document.createElement('style');
       style.type = "text/css";
-      style.textContent = styles;
+      style.innerHTML = styles;
       document.getElementsByTagName('HEAD')[0].appendChild(style);
     } else {
       var
@@ -124,8 +124,8 @@ FB.provide('Dom', {
       var
         userAgent = window.navigator.userAgent.toLowerCase(),
         // list of known browser. NOTE: the order is important
-        keys = ['msie', 'firefox', 'safari', 'gecko'],
-        names = ['ie',  'mozilla', 'safari', 'mozilla'];
+        keys = ['msie', 'firefox', 'gecko',   'safari'],
+        names = ['ie',  'mozilla', 'mozilla', 'safari'];
       for (var i = 0; i < keys.length; i++) {
         if (userAgent.indexOf(keys[i]) >= 0) {
           FB.Dom._browserType = names[i];
