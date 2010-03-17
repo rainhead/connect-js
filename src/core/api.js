@@ -23,7 +23,7 @@
  *           fb.qs
  *           fb.flash
  *           fb.md5sum
- *           fb.json2
+ *           fb.json
  */
 
 /**
@@ -35,12 +35,21 @@
  */
 FB.provide('', {
   /**
-   * Once you have a session for the current user, you will want to
-   * access data about that user, such as getting their name & profile
-   * picture, friends lists or upcoming events they will be
-   * attending. In order to do this, you will be making signed API
-   * calls to Facebook using their session. Suppose we want to alert
-   * the current user's name:
+   * Server-side [[wiki:API]] calls are available via the JavaScript SDK that
+   * allow you to build rich applications that can make [[wiki:API]] calls
+   * against the Facebook servers directly from the user's browser. This can
+   * improve performance in many scenarios, as compared to making all calls
+   * from your server. It can also help reduce, or eliminate the need to proxy
+   * the requests thru your own servers, freeing them to do other things.
+   *
+   * The range of APIs available covers virtually all facets of Facebook.
+   * Public data such as names and profile pictures ([[wiki:User (FQL)]]) are
+   * available if you know the UID of the user. Various parts of the API are
+   * available depending on the [connect status and the permissions][FB.login]
+   * the user has granted your application.
+   *
+   * Suppose we want to alert the current user's name (assuming they are
+   * already [connected][FB.login]):
    *
    *     FB.api(
    *       {
@@ -61,15 +70,22 @@ FB.provide('', {
    *
    * [[wiki:FQL Tables]] are available for various types of data.
    *
+   * [FB.login]: /docs/?u=facebook.joey.FB.login
+   *
    * @access public
-   * @param user_params {Object} parameters for the query
-   * @param cb {Function} the callback function to handle the response
+   * @param params {Object} The required arguments vary based on the method
+   * being used, but specifying the method itself is mandatory:
+   *
+   * Property | Type    | Description                      | Argument
+   * -------- | ------- | -------------------------------- | ------------
+   * method   | String  | The API method to invoke.        | **Required**
+   * @param cb {Function} The callback function to handle the response.
    */
-  api: function(user_params, cb) {
+  api: function(params, cb) {
     // this is an optional dependency on FB.Auth
     // Auth.revokeAuthorization affects the session
     if (FB.Auth &&
-        user_params.method.toLowerCase() == 'auth.revokeauthorization') {
+        params.method.toLowerCase() == 'auth.revokeauthorization') {
       var old_cb = cb;
       cb = function(response) {
         if (response === true) {
@@ -79,24 +95,13 @@ FB.provide('', {
       };
     }
 
-    // automatically JSON encode non string values
-    var params = {};
-    for (var key in user_params) {
-      if (user_params.hasOwnProperty(key)) {
-        var value = user_params[key];
-        if (typeof value == 'string') {
-          params[key] = value;
-        } else {
-          params[key] = JSON.stringify(value);
-        }
-      }
-    }
+    var flat_params = FB.JSON.flatten(params);
 
     try {
-      FB.RestServer.jsonp(params, cb);
+      FB.RestServer.jsonp(flat_params, cb);
     } catch (x) {
       if (FB.Flash.hasMinVersion()) {
-        FB.RestServer.flash(params, cb);
+        FB.RestServer.flash(flat_params, cb);
       } else {
         throw new Error('Flash is required for this API call.');
       }
@@ -125,7 +130,7 @@ FB.provide('RestServer', {
     // general api call parameters
     FB.copy(params, {
       api_key : FB._apiKey,
-      call_id : (new Date()).getTime(),
+      call_id : new Date().getTime(),
       format  : 'json',
       v       : '1.0'
     });
@@ -201,7 +206,7 @@ FB.provide('RestServer', {
       // the SWF calls this global function when a HTTP response is available
       // FIXME: remove global
       window.FB_OnXdHttpResult = function(reqId, data) {
-        FB.RestServer._callbacks[reqId](FB.Flash.decode(data));
+        FB.RestServer._callbacks[reqId](decodeURIComponent(data));
       };
       FB.RestServer.flash._init = true;
     }
@@ -227,7 +232,7 @@ FB.provide('RestServer', {
 
       // callback
       FB.RestServer._callbacks[reqId] = function(response) {
-        cb(JSON.parse(FB.Flash.decode(response)));
+        cb(FB.JSON.parse(response));
         delete FB.RestServer._callbacks[reqId];
       };
     });

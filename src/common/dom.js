@@ -79,38 +79,35 @@ FB.provide('Dom', {
    * Add CSS rules using a <style> tag.
    *
    * @param styles {String} the styles
-   * @param id {String} an identifier for this set of styles
+   * @param names {Array} the component names that the styles represent
    */
-  addCssRules: function(styles, id) {
-    //TODO idea, use the md5 of the styles as the id
+  addCssRules: function(styles, names) {
     if (!FB.Dom._cssRules) {
       FB.Dom._cssRules = {};
     }
 
-    // Check if this style sheet is already applied
-    if (id in FB.Dom._cssRules) {
+    // note, we potentially re-include CSS if it comes with other CSS that we
+    // have previously not included.
+    var allIncluded = true;
+    FB.Array.forEach(names, function(id) {
+      if (!(id in FB.Dom._cssRules)) {
+        allIncluded = false;
+        FB.Dom._cssRules[id] = true;
+      }
+    });
+
+    if (allIncluded) {
       return;
     }
 
-    FB.Dom._cssRules[id] = true;
-
-    var style;
+//#JSCOVERAGE_IF
     if (FB.Dom.getBrowserType() != 'ie') {
-      style = document.createElement('style');
-      style.type = "text/css";
-      style.innerHTML = styles;
+      var style = document.createElement('style');
+      style.type = 'text/css';
+      style.textContent = styles;
       document.getElementsByTagName('HEAD')[0].appendChild(style);
     } else {
-      var
-        re = /([\w|#|\.|\\][^{]*){(.*?)}/mg,
-        a;
-      style = document.createStyleSheet();
-      while (a = re.exec(styles)) {
-        var rules = FB.Array.map(a[1].split(','), FB.String.trim);
-        for (var i=0; i < rules.length; i++) {
-          style.addRule(rules[i], a[2]);
-        }
-      }
+      document.createStyleSheet().cssText = styles;
     }
   },
 
@@ -124,8 +121,8 @@ FB.provide('Dom', {
       var
         userAgent = window.navigator.userAgent.toLowerCase(),
         // list of known browser. NOTE: the order is important
-        keys = ['msie', 'firefox', 'gecko',   'safari'],
-        names = ['ie',  'mozilla', 'mozilla', 'safari'];
+        keys  = ['msie', 'firefox', 'safari', 'gecko'],
+        names = ['ie',   'mozilla', 'safari', 'mozilla'];
       for (var i = 0; i < keys.length; i++) {
         if (userAgent.indexOf(keys[i]) >= 0) {
           FB.Dom._browserType = names[i];
@@ -134,5 +131,23 @@ FB.provide('Dom', {
       }
     }
     return FB.Dom._browserType;
+  },
+
+  /**
+   * Get the viewport info. Contains size and scroll offsets.
+   *
+   * @returns {Object} with the width and height
+   */
+  getViewportInfo: function() {
+    // W3C compliant, or fallback to body
+    var root = (document.documentElement && document.compatMode == 'CSS1Compat')
+      ? document.documentElement
+      : document.body;
+    return {
+      scrollTop  : root.scrollTop,
+      scrollLeft : root.scrollLeft,
+      width      : self.innerWidth  ? self.innerWidth  : root.clientWidth,
+      height     : self.innerHeight ? self.innerHeight : root.clientHeight
+    };
   }
 });

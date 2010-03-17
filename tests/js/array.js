@@ -12,6 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * @provides fb.tests.array
+ * @requires fb.tests.qunit
+ *           fb.array
  */
 ////////////////////////////////////////////////////////////////////////////////
 module('array');
@@ -87,3 +91,40 @@ test(
                          }),
          ['carrots', 'cucumbers']);
   });
+
+test(
+  'FB.Array forEach array',
+  function() {
+    var a = [1,2,3];
+    var c = 0;
+    FB.Array.forEach(a, function(v) {
+      c += v;
+    });
+
+    equals(c, 6, 'expect the answer');
+  }
+);
+
+test(
+  'FB.Array forEach dict',
+  function() {
+    var d = {a:1, b:2, c:3};
+    var results=[];
+    FB.Array.forEach(d, function(v, k) {
+      results.push(k);
+      results.push(v);
+    });
+
+    var s = results.join(',');
+    equals(s, 'a,1,b,2,c,3', 'expect the answer');
+  }
+);
+
+test(
+  'FB.Array forEach DOM collection',
+  function() {
+    FB.Array.forEach(document.getElementsByTagName('title'), function(v) {
+      equals(v.innerHTML, 'Mu Tests', 'expect the title back');
+    });
+  }
+);

@@ -46,7 +46,7 @@ FB.subclass('XFBML.Fan', 'XFBML.IframeWidget', null, {
 
     // "id" or "name" is required
     if (!this._attr.id && !this._attr.name) {
-      FB.Log('<fb:fan> requires one of the "id" or "name" attributes.');
+      FB.log('<fb:fan> requires one of the "id" or "name" attributes.');
       return false;
     }
 
@@ -87,6 +87,6 @@ FB.subclass('XFBML.Fan', 'XFBML.IframeWidget', null, {
    * @return {String} the iframe URL
    */
   getIframeUrl: function() {
-    return FB._domain.www + 'connect/connect.php?' + FB.QS.encode(this._attr);
+    return FB._domain.www + 'widgets/fan.php?' + FB.QS.encode(this._attr);
   }
 });

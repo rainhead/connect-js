@@ -1,8 +1,10 @@
 /**
- * This is the stock JSON2 implementation from www.json.org, unmodified except
- * for this docblock.
+ * This is the stock JSON2 implementation from www.json.org.
  *
- * @provides fb.json2
+ * Modifications include:
+ * 1/ Removal of jslint settings
+ *
+ * @provides fb.thirdparty.json2
  */
 
 /*
@@ -149,15 +151,6 @@
 
     USE YOUR OWN COPY. IT IS EXTREMELY UNWISE TO LOAD CODE FROM SERVERS YOU DO
     NOT CONTROL.
-*/
-
-/*jslint evil: true, strict: false */
-
-/*members "", "\b", "\t", "\n", "\f", "\r", "\"", JSON, "\\", apply,
-    call, charCodeAt, getUTCDate, getUTCFullYear, getUTCHours,
-    getUTCMinutes, getUTCMonth, getUTCSeconds, hasOwnProperty, join,
-    lastIndex, length, parse, prototype, push, replace, slice, stringify,
-    test, toJSON, toString, valueOf
 */
 
 

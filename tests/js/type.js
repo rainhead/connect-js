@@ -12,6 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * @provides fb.tests.type
+ * @requires fb.tests.qunit
+ *           fb.type
  */
 ////////////////////////////////////////////////////////////////////////////////
 module('type');
@@ -47,7 +51,7 @@ test(
                }
              });
 
-    equals(FB.CLASSES["Test"], classDef);
+    equals(FB.CLASSES.Test, classDef);
     var c = new FB.Test("constructor");
     c.test(42);
 

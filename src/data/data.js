@@ -15,7 +15,14 @@
  *
  * @provides fb.data
  * @layer data
- * @requires fb.prelude fb.type fb.array fb.string fb.api fb.obj fb.data.query
+ * @requires fb.prelude
+ *           fb.type
+ *           fb.array
+ *           fb.string
+ *           fb.api
+ *           fb.obj
+ *           fb.data.query
+ *           fb.json
  */
 
 
@@ -88,16 +95,16 @@ FB.provide('Data', {
    *      FB.Data.waitOn([query, friends, events], function() {
    *        // build a map of eid, uid to name
    *        var eventNames = friendNames = {};
-   *        FB.forEach(events.value, function(row) {
+   *        FB.Array.forEach(events.value, function(row) {
    *          eventNames[row.eid] = row.name;
    *        });
-   *        FB.forEach(friends.value, function(row) {
+   *        FB.Array.forEach(friends.value, function(row) {
    *          friendNames[row.uid] = row.name;
    *        });
    *
    *        // now display all the results
    *        var html = '';
-   *        FB.forEach(query.value, function(row) {
+   *        FB.Array.forEach(query.value, function(row) {
    *          html += '<p>'
    *            + friendNames[row.uid]
    *            + ' is attending '
@@ -116,7 +123,7 @@ FB.provide('Data', {
    * An async query object that contains query result.
    */
   query: function(template, data) {
-    var query = (new FB.Data.Query()).parse(arguments);
+    var query = new FB.Data.Query().parse(arguments);
     FB.Data.queue.push(query);
     FB.Data._waitToProcess();
     return query;
@@ -202,7 +209,7 @@ FB.provide('Data', {
       };
     }
 
-    FB.forEach(dependencies, function(item) {
+    FB.Array.forEach(dependencies, function(item) {
       item.monitor('value', function() {
         var done = false;
         if (FB.Data._getValue(item) !== undefined) {
@@ -286,15 +293,15 @@ FB.provide('Data', {
       return query.toFql();
     });
 
-    params.queries = JSON.stringify(params.queries);
+    params.queries = FB.JSON.stringify(params.queries);
 
     FB.api(params, function(result) {
       if (result.error_msg) {
-        FB.forEach(mqueries, function(q) {
+        FB.Array.forEach(mqueries, function(q) {
           q.error(Error(result.error_msg));
         });
       } else {
-        FB.forEach(result, function(o) {
+        FB.Array.forEach(result, function(o) {
           mqueries[o.name].set(o.fql_result_set);
         });
       }

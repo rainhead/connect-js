@@ -15,18 +15,23 @@
  *
  * @provides fb.xfbml.element
  * @layer xfbml
- * @requires fb.type fb.event
+ * @requires fb.type fb.event fb.array
  */
 
 /**
  * Base class for all XFBML elements. To create your own XFBML element, make a
  * class that derives from this, and then call [[joey:FB.XFBML.registerTag]].
  *
+ * @access private
  * @class FB.XFBML.Element
  */
 FB.Class('XFBML.Element',
-  /*
+  /**
+   * Create a new Element.
+   *
+   * @access private
    * @constructor
+   * @param dom {DOMElement} the DOMElement for the tag
    */
   function(dom) {
     this.dom = dom;
@@ -39,6 +44,7 @@ FB.Class('XFBML.Element',
    * Note, the transform function is never executed over the default value. It
    * is only used to transform user set attribute values.
    *
+   * @access private
    * @param name {String} Name of the attribute.
    * @param defaultValue {Object} Default value if attribute isn't set.
    * @param transform {Function} Optional function to transform found value.
@@ -52,6 +58,7 @@ FB.Class('XFBML.Element',
   /**
    * Helper function to extract boolean attribute value.
    *
+   * @access private
    * @param name {String} Name of the attribute.
    * @param defaultValue {Object} Default value if attribute isn't set.
    */
@@ -65,6 +72,7 @@ FB.Class('XFBML.Element',
   /**
    * Get an integer value for size in pixels.
    *
+   * @access private
    * @param name {String} Name of the attribute.
    * @param defaultValue {Object} Default value if attribute isn't set.
    */
@@ -80,8 +88,30 @@ FB.Class('XFBML.Element',
   },
 
   /**
+   * Get a value if it is in the allowed list, otherwise return the default
+   * value. This function ignores case and expects you to use only lower case
+   * allowed values.
+   *
+   * @access private
+   * @param name {String} Name of the attribute.
+   * @param defaultValue {Object} Default value
+   * @param allowed {Array} List of allowed values.
+   */
+  _getAttributeFromList: function(name, defaultValue, allowed) {
+    return this.getAttribute(name, defaultValue, function(s) {
+      s = s.toLowerCase();
+      if (FB.Array.indexOf(allowed, s) > -1) {
+        return s;
+      } else {
+        return defaultValue;
+      }
+    });
+  },
+
+  /**
    * Check if this node is still valid and in the document.
    *
+   * @access private
    * @returns {Boolean} true if element is valid
    */
   isValid: function() {
@@ -94,6 +124,8 @@ FB.Class('XFBML.Element',
 
   /**
    * Clear this element and remove all contained elements.
+   *
+   * @access private
    */
   clear: function() {
     this.dom.innerHTML = '';

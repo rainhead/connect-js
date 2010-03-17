@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *
- *
  * @provides fb.event
- * @requires fb.prelude
+ * @requires fb.prelude fb.array
  */
 
+// NOTE: We tag this as FB.Event even though it is actually FB.EventProvider to
+// work around limitations in the documentation system.
 /**
- * General event interface provides fire, subscribe, unsubscribe methods.
- * Global events are accessed via the [[joey:FB.Event]] object. This also
- * supports events on specific objects that derive from FB.EventProvider.
+ * Event handling mechanism for globally named events.
  *
- * @class FB.EventProvider
- * @private
  * @static
+ * @class FB.Event
  */
 FB.provide('EventProvider', {
   /**
@@ -48,7 +45,8 @@ FB.provide('EventProvider', {
   },
 
   /**
-   * Bind an event handler to a given event name.
+   * Subscribe to a given event name, invoking your callback function whenever
+   * the event is fired.
    *
    * For example, suppose you want to get notified whenever the session
    * changes:
@@ -58,8 +56,8 @@ FB.provide('EventProvider', {
    *     });
    *
    * @access public
-   * @param name {String} name of the event
-   * @param cb {Function} the handler function
+   * @param name {String} Name of the event.
+   * @param cb {Function} The handler function.
    */
   subscribe: function(name, cb) {
     var subs = this.subscribers();
@@ -90,19 +88,17 @@ FB.provide('EventProvider', {
    * [subscribe]: /docs/?u=facebook.jslib-alpha.FB.Event.subscribe
    *
    * @access public
-   * @param name {String} name of the event
-   * @param cb {Function} the handler function
+   * @param name {String} Name of the event.
+   * @param cb {Function} The handler function.
    */
   unsubscribe: function(name, cb) {
-    var subs = this.subscribers();
+    var subs = this.subscribers()[name];
 
-    if (subs[name]) {
-      for (var i=0, l=subs[name].length; i<l; i++) {
-        if (subs[name][i] == cb) {
-          subs[name][i] = null;
-        }
+    FB.Array.forEach(subs, function(value, key) {
+      if (value == cb) {
+        subs[key] = null;
       }
-    }
+    });
   },
 
   /**
@@ -110,6 +106,7 @@ FB.provide('EventProvider', {
    * immediately when monitor is called, and then every time the event
    * fires. The subscription is canceled when the callback returns true.
    *
+   * @access private
    * @param {string} name Name of event.
    * @param {function} callback A callback function. Any additional arguments
    * to monitor() will be passed on to the callback. When the callback returns
@@ -121,7 +118,6 @@ FB.provide('EventProvider', {
         ctx = this,
         fn = function() {
           if (callback.apply(callback, arguments)) {
-            // unsubscribe
             ctx.unsubscribe(name, fn);
           }
         };
@@ -137,17 +133,11 @@ FB.provide('EventProvider', {
    * This is useful if the event is no longer worth listening to and you
    * believe that multiple subscribers have been set up.
    *
-   * @access public
+   * @access private
    * @param name    {String}   name of the event
    */
   clear: function(name) {
-    var subs = this.subscribers();
-
-    if (subs[name]) {
-      for (var i=0, l=subs[name].length; i<l; i++) {
-        subs[name][i] = null;
-      }
-    }
+    delete this.subscribers()[name];
   },
 
   /**
@@ -159,23 +149,16 @@ FB.provide('EventProvider', {
    */
   fire: function() {
     var
-      args        = Array.prototype.slice.call(arguments),
-      name        = args.shift(),
-      subscribers = this.subscribers()[name],
-      sub;
+      args = Array.prototype.slice.call(arguments),
+      name = args.shift();
 
-    // no subscribers, boo
-    if (!subscribers) {
-      return;
-    }
-
-    for (var i=0, l=subscribers.length; i<l; i++) {
-      sub = subscribers[i];
-      // this is because we null out unsubscribed rather than jiggle the array
+    FB.Array.forEach(this.subscribers()[name], function(sub) {
+      // this is because we sometimes null out unsubscribed rather than jiggle
+      // the array
       if (sub) {
         sub.apply(this, args);
       }
-    }
+    });
   }
 });
 

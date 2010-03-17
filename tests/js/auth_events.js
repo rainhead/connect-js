@@ -12,6 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * @provides fb.tests.authevents
+ * @requires fb.tests.qunit
+ *           fb.auth
  */
 ////////////////////////////////////////////////////////////////////////////////
 module('auth events');
@@ -25,6 +29,9 @@ test(
     var cb = function(response) {
       ok(true, 'subscriber got called');
       expected -= 1;
+      if (expected < 0) {
+        throw new Exception('got more auth events than expected');
+      }
     };
     FB.Event.subscribe('auth.sessionChange', cb);
 
@@ -46,6 +53,7 @@ test(
 
                   // unsubscribe once we're done
                   FB.Event.unsubscribe('auth.sessionChange', cb);
+                  action.innerHTML = '';
                   start();
                 }, 'email');
               }, {perms: 'offline_access'});

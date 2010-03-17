@@ -15,14 +15,14 @@
  *
  * @provides fb.xfbml
  * @layer xfbml
- * @requires fb.prelude fb.loader
+ * @requires fb.prelude fb.loader fb.array
  */
 
 /**
  * Methods for the rendering of [[wiki:XFBML]] tags.
  *
- * To render the tags, simple use them anywhere in your page,
- * and then call:
+ * To render the tags, simply put the tags anywhere in your page, and then
+ * call:
  *
  *      FB.XFBML.parse();
  *
@@ -36,28 +36,6 @@ FB.provide('XFBML', {
    * @type Number
    */
   _renderTimeout: 30000,
-
-  /**
-   * Dynamically set XFBML markup on a given DOM element. Use this
-   * method if you want to set XFBML after the page has already loaded
-   * (for example, in response to an Ajax request or API call).
-   *
-   * Example:
-   * --------
-   * Set the innerHTML of a dom element with id "container"
-   * to some markup (fb:name + regular HTML) and render it
-   *
-   *      FB.XFBML.set(FB.$('container'),
-   *          '<fb:name uid="4"></fb:name><div>Hello</div>');
-   *
-   * @param {DOMElement} dom  DOM element
-   * @param {String} markup XFBML markup. It may contain reguarl
-   *         HTML markup as well.
-   */
-  set: function(dom, markup, cb) {
-    dom.innerHTML = markup;
-    FB.XFBML.parse(dom, cb);
-  },
 
   /**
    * Parse and render XFBML markup in the document.
@@ -102,7 +80,7 @@ FB.provide('XFBML', {
       };
 
     // First, find all tags that are present
-    FB.forEach(FB.XFBML._tagInfos, function(tagInfo) {
+    FB.Array.forEach(FB.XFBML._tagInfos, function(tagInfo) {
       // default the xmlns if needed
       if (!tagInfo.xmlns) {
         tagInfo.xmlns = 'fb';
@@ -120,11 +98,11 @@ FB.provide('XFBML', {
     });
 
     // Setup a timer to ensure all tags render within a given timeout
-    var timeout = window.setTimeout(function() {
-      if (count != 0) {
+    window.setTimeout(function() {
+      if (count > 0) {
         FB.log(
           count + ' XFBML tags failed to render in ' +
-          FB.XFBML._renderTimeout + 'ms'
+          FB.XFBML._renderTimeout + 'ms.'
         );
       }
     }, FB.XFBML._renderTimeout);
@@ -146,6 +124,7 @@ FB.provide('XFBML', {
    *                  className: 'FB.XFBML.Name'},
    *       FB.XFBML.registerTag(tagInfo);
    *
+   * @access private
    * @param {Object} tagInfo
    * an object containiner the following keys:
    * - xmlns
@@ -171,6 +150,7 @@ FB.provide('XFBML', {
     // Check if element for the dom already exists
     var element = dom._element;
     if (element) {
+      element.subscribe('render', cb);
       element.process();
     } else {
       var processor = function() {
@@ -210,7 +190,6 @@ FB.provide('XFBML', {
       // suggestion by Firefox developers.
       // See https://bugzilla.mozilla.org/show_bug.cgi?id=531662
       return dom.getElementsByTagNameNS(document.body.namespaceURI, fullName);
-      break;
     case 'ie':
       var docNamespaces = document.namespaces;
       if (docNamespaces && docNamespaces[xmlns]) {
@@ -226,10 +205,8 @@ FB.provide('XFBML', {
         // GetElementssByTagName with namespace appended.
         return dom.getElementsByTagName(fullName);
       }
-      break;
     default:
       return dom.getElementsByTagName(fullName);
-      break;
     }
   },
 
@@ -241,16 +218,18 @@ FB.provide('XFBML', {
    * NOTE: Keep the list alpha sorted.
    */
   _tagInfos: [
-    { localName: 'add-to-wishlist', className: 'FB.XFBML.AddToWishList' },
-    { localName: 'comments',        className: 'FB.XFBML.Comments' },
-    { localName: 'fan',             className: 'FB.XFBML.Fan' },
-    { localName: 'like',            className: 'FB.XFBML.Like' },
-    { localName: 'live-stream',     className: 'FB.XFBML.LiveStream' },
-    { localName: 'login-button',    className: 'FB.XFBML.LoginButton' },
-    { localName: 'name',            className: 'FB.XFBML.Name' },
-    { localName: 'profile-pic',     className: 'FB.XFBML.ProfilePic' },
-    { localName: 'serverfbml',      className: 'FB.XFBML.ServerFbml' },
-    { localName: 'share-button',    className: 'FB.XFBML.ShareButton' }
+    { localName: 'activity',        className: 'FB.XFBML.Activity'        },
+    { localName: 'comments',        className: 'FB.XFBML.Comments'        },
+    { localName: 'fan',             className: 'FB.XFBML.Fan'             },
+    { localName: 'like',            className: 'FB.XFBML.Like'            },
+    { localName: 'live-stream',     className: 'FB.XFBML.LiveStream'      },
+    { localName: 'login',           className: 'FB.XFBML.Login'           },
+    { localName: 'login-button',    className: 'FB.XFBML.LoginButton'     },
+    { localName: 'name',            className: 'FB.XFBML.Name'            },
+    { localName: 'profile-pic',     className: 'FB.XFBML.ProfilePic'      },
+    { localName: 'recommendations', className: 'FB.XFBML.Recommendations' },
+    { localName: 'serverfbml',      className: 'FB.XFBML.ServerFbml'      },
+    { localName: 'share-button',    className: 'FB.XFBML.ShareButton'     }
   ]
 });
 
@@ -258,6 +237,6 @@ FB.provide('XFBML', {
  * For IE, we will try to detect if document.namespaces contains 'fb' already
  * and add it if it does not exist.
  */
-if (document.namespaces && !document.namespaces.item['fb']) {
+if (document.namespaces && !document.namespaces.item.fb) {
    document.namespaces.add('fb');
 }

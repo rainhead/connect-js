@@ -27,9 +27,6 @@
  */
 FB.subclass('XFBML.Like', 'XFBML.EdgeWidget', null, {
   /**
-   * Returns the name that should be given to the iFrame being fetched and
-   * rendered on behalf of this <fb:add-to-wishlist> button.
-   *
    * @return {String} the name that should be given to the button's
    *         iFrame rendering.
    */
@@ -38,12 +35,12 @@ FB.subclass('XFBML.Like', 'XFBML.EdgeWidget', null, {
   },
 
   /**
-   * Returns the type of edge managed by the Like button.
+   * Get the URL for the iframe.
    *
-   * @return string the string 'like'
+   * @return {String} the iframe URL
    */
-  getEdgeType : function() {
-    return 'like';
+  getIframeUrl : function() {
+    return FB._domain.www + 'widgets/like.php?' + FB.QS.encode(this._attr);
   }
 });
 
