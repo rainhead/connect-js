@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * @provides fb.xfbml.livestream
+ * @provides fb.xfbml.facepile
  * @layer xfbml
- * @requires fb.type fb.xfbml.iframewidget
+ * @requires fb.type fb.xfbml.facepile fb.auth
  */
 
 /**
- * Implementation for fb:live-stream tag.
+ * Implementation for fb:facepile tag.
  *
- * @class FB.XFBML.LiveStream
- * @extends FB.XFBML.IframeWidget
+ * @class FB.XFBML.Facepile
+ * @extends FB.XFBML.Facepile
  * @private
  */
-FB.subclass('XFBML.LiveStream', 'XFBML.IframeWidget', null, {
+FB.subclass('XFBML.Facepile', 'XFBML.IframeWidget', null, {
   _visibleAfter: 'load',
 
   /**
@@ -33,23 +33,38 @@ FB.subclass('XFBML.LiveStream', 'XFBML.IframeWidget', null, {
    */
   setupAndValidate: function() {
     this._attr = {
-      height         : this._getPxAttribute('height', 500),
-      hideFriendsTab : this.getAttribute('hide-friends-tab'),
-      redesigned     : this._getBoolAttribute('redesigned-stream'),
-      width          : this._getPxAttribute('width', 400),
-      xid            : this.getAttribute('xid', 'default')
+      channel: this.getChannelUrl(),
+      max_rows: this.getAttribute('max-rows'),
+      width: this._getPxAttribute('width', 200)
     };
 
     return true;
   },
 
   /**
+   * Setup event handlers.
+   */
+  oneTimeSetup: function() {
+    // this widget's internal state is tied to the "connected" status. it
+    // doesn't care about the difference between "unknown" and "notConnected".
+    var lastStatus = FB._userStatus;
+    FB.Event.subscribe('auth.statusChange', FB.bind(function(response) {
+      if (lastStatus == 'connected' || response.status == 'connected') {
+        this.process(true);
+      }
+      lastStatus = response.status;
+    }, this));
+  },
+
+  /**
    * Get the initial size.
+   *
+   * By default, shows one row of 6 profiles
    *
    * @return {Object} the size
    */
   getSize: function() {
-    return { width: this._attr.width, height: this._attr.height };
+    return { width: this._attr.width, height: 70 };
   },
 
   /**
@@ -58,7 +73,6 @@ FB.subclass('XFBML.LiveStream', 'XFBML.IframeWidget', null, {
    * @return {Object} the iframe URL bits
    */
   getUrlBits: function() {
-    var name = this._attr.redesigned ? 'live_feed' : 'livefeed';
-    return { name: name, params: this._attr };
+    return { name: 'facepile', params: this._attr };
   }
 });

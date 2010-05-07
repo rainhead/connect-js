@@ -18,6 +18,7 @@
  * @requires fb.type
  *           fb.intl
  *           fb.xfbml.buttonelement
+ *           fb.helper
  *           fb.auth
  */
 
@@ -35,8 +36,8 @@ FB.subclass('XFBML.LoginButton', 'XFBML.ButtonElement', null, {
    * @return {Boolean} true to continue processing, false to halt it
    */
   setupAndValidate: function() {
-    this.autologoutlink = this._getBoolAttribute('autologoutlink');
-    this.onlogin = this.getAttribute('onlogin');
+    this.autologoutlink = this._getBoolAttribute('auto-logout-link');
+    this.onlogin = this.getAttribute('on-login');
     this.perms = this.getAttribute('perms');
     this.length = this._getAttributeFromList(
       'length',         // name
@@ -90,12 +91,6 @@ FB.subclass('XFBML.LoginButton', 'XFBML.ButtonElement', null, {
    * @param response {Object} the auth response object
    */
   _authCallback: function(response) {
-    if (this.onlogin) {
-      if (this.onlogin.call) {
-        this.onlogin(response);
-      } else { // assume it is a string
-        eval(this.onlogin);
-      }
-    }
+    FB.Helper.invokeHandler(this.onlogin, this, [response]);
   }
 });

@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * @provides fb.xfbml.like
- * @layer xfbml
- * @requires fb.type fb.xfbml.edgewidget
+ * @provides fb.tests.xfbmltagswithsession
+ * @requires fb.tests.qunit
+ *           fb.xfbml
+ *           fb.tests.xfbmltest
  */
+////////////////////////////////////////////////////////////////////////////////
+module('xfbmltagswithsession');
+////////////////////////////////////////////////////////////////////////////////
 
-/**
- * Implementation for fb:like tag.
- *
- * @class FB.XFBML.Like
- * @extends FB.XFBML.EdgeWidget
- * @private
- */
-FB.subclass('XFBML.Like', 'XFBML.EdgeWidget', null, {
+test(
+  'fb:connectbar',
 
-  /**
-   * Get the URL bits for the iframe.
-   *
-   * @return {Object} the iframe URL bits
-   */
-  getUrlBits: function() {
-    return { name: 'like', params: this._attr };
+  function() {
+    XTest.expect(1);
+    FB.login(function(response) {
+      XTest.regex(
+        '<fb:connect-bar></fb:connect-bar>',
+        'fb_connect_bar_container'
+      );
+    });
   }
-});
+);

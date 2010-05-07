@@ -13,26 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * @provides fb.xfbml.like
+ * @author jcain
+ * @provides fb.css.edgecommentwidget
  * @layer xfbml
- * @requires fb.type fb.xfbml.edgewidget
  */
 
-/**
- * Implementation for fb:like tag.
- *
- * @class FB.XFBML.Like
- * @extends FB.XFBML.EdgeWidget
- * @private
- */
-FB.subclass('XFBML.Like', 'XFBML.EdgeWidget', null, {
+.fb_edge_widget_with_comment {
+  position: relative;
+  *z-index: 1000;
+}
 
-  /**
-   * Get the URL bits for the iframe.
-   *
-   * @return {Object} the iframe URL bits
-   */
-  getUrlBits: function() {
-    return { name: 'like', params: this._attr };
-  }
-});
+.fb_edge_widget_with_comment span.fb_edge_comment_widget {
+  left: -4px;
+  position: absolute;
+}

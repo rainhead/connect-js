@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ * TODO: add back fb.api to requires
+ *
  * @provides fb.data
  * @layer data
  * @requires fb.prelude
  *           fb.type
  *           fb.array
  *           fb.string
- *           fb.api
  *           fb.obj
  *           fb.data.query
  *           fb.json
@@ -198,7 +199,7 @@ FB.provide('Data', {
   waitOn: function(dependencies, callback) {
     var
       result = new FB.Waitable(),
-      c = dependencies.length;
+      count = dependencies.length;
 
     // For developer convenience, we allow the callback
     // to be a string of javascript expression
@@ -213,10 +214,10 @@ FB.provide('Data', {
       item.monitor('value', function() {
         var done = false;
         if (FB.Data._getValue(item) !== undefined) {
-          c--;
+          count--;
           done = true;
         }
-        if (c === 0) {
+        if (count === 0) {
           var value = callback(FB.Array.map(dependencies, FB.Data._getValue));
           result.set(value !== undefined ? value : true);
         }

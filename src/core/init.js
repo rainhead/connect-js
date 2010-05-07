@@ -17,9 +17,10 @@
  *
  * JavaScript library providing Facebook Connect integration.
  *
+ * TODO: add back fb.api to requires
+ *
  * @provides fb.init
  * @requires fb.prelude
- *           fb.api
  *           fb.auth
  *           fb.cookie
  *           fb.ui
@@ -40,10 +41,10 @@ FB.provide('', {
    * Typical initialization enabling all optional features:
    *
    *      <div id="fb-root"></div>
-   *      <script src="http://static.ak.fbcdn.net/connect/en_US/core.js"></script>
+   *      <script src="http://connect.facebook.net/en_US/all.js"></script>
    *      <script>
    *        FB.init({
-   *          apiKey : 'YOUR API KEY',
+   *          appId  : 'YOUR APP ID',
    *          status : true, // check login status
    *          cookie : true, // enable cookies to allow the server to access the session
    *          xfbml  : true  // parse XFBML
@@ -63,7 +64,7 @@ FB.provide('', {
    *     <script>
    *       window.fbAsyncInit = function() {
    *         FB.init({
-   *           apiKey : 'YOUR API KEY',
+   *           appId  : 'YOUR APP ID',
    *           status : true, // check login status
    *           cookie : true, // enable cookies to allow the server to access the session
    *           xfbml  : true  // parse XFBML
@@ -72,8 +73,7 @@ FB.provide('', {
    *
    *       (function() {
    *         var e = document.createElement('script');
-   *         e.type = 'text/javascript';
-   *         e.src = 'http://static.ak.fbcdn.net/connect/en_US/core.js';
+   *         e.src = document.location.protocol + '//connect.facebook.net/en_US/all.js';
    *         e.async = true;
    *         document.getElementById('fb-root').appendChild(e);
    *       }());
@@ -83,10 +83,30 @@ FB.provide('', {
    * the opening `<body>` tag. This allows Facebook initialization to happen in
    * parallel with the initialization on the rest of your page.
    *
+   * ### Internationalization
+   *
+   * Facebook Connect features are available many locales. You can replace the
+   * `en_US` locale specifed above with one of the [supported Facebook
+   * Locales][locales]. For example, to load up the library and trigger dialogs,
+   * popups and plugins to be in Hindi (`hi_IN`), you can load the library from
+   * this URL:
+   *
+   *     http://connect.facebook.net/hi_IN/all.js
+   *
+   * [locales]: http://wiki.developers.facebook.com/index.php/Facebook_Locales
+   *
+   * ### SSL
+   *
+   * Facebook Connect is also available over SSL. You should only use this when
+   * your own page is served over `https://`. The library will rely on the
+   * current page protocol at runtime. The SSL URL is the same, only the
+   * protocol is changed:
+   *
+   *     https://connect.facebook.net/en_US/all.js
    *
    * **Note**: Some [UI methods][FB.ui] like **stream.publish** and
    * **stream.share** can be used without registering an application or calling
-   * this method. If you are using an API key, all methods **must** be called
+   * this method. If you are using an appId, all methods **must** be called
    * after this method.
    *
    * [FB.ui]: /docs/?u=facebook.joey.FB.ui
@@ -94,28 +114,23 @@ FB.provide('', {
    * @access public
    * @param options {Object}
    *
-   * Property | Type    | Description                          | Argument     | Default
-   * -------- | ------- | ------------------------------------ | ------------ | -------
-   * apiKey   | String  | Your application API key.            | **Required** |
-   * cookie   | Boolean | `true` to enable cookie support.     | *Optional*   | `false`
-   * logging  | Boolean | `false` to disable logging.          | *Optional*   | `true`
-   * session  | Object  | Use specified session object.        | *Optional*   | `null`
-   * status   | Boolean | `true` to fetch fresh status.        | *Optional*   | `false`
-   * xfbml    | Boolean | `true` to parse [[wiki:XFBML]] tags. | *Optional*   | `false`
+   * Property | Type    | Description                          | Argument   | Default
+   * -------- | ------- | ------------------------------------ | ---------- | -------
+   * appId    | String  | Your application ID.                 | *Optional* | `null`
+   * cookie   | Boolean | `true` to enable cookie support.     | *Optional* | `false`
+   * logging  | Boolean | `false` to disable logging.          | *Optional* | `true`
+   * session  | Object  | Use specified session object.        | *Optional* | `null`
+   * status   | Boolean | `true` to fetch fresh status.        | *Optional* | `false`
+   * xfbml    | Boolean | `true` to parse [[wiki:XFBML]] tags. | *Optional* | `false`
    */
   init: function(options) {
-    if (!options || !options.apiKey) {
-      FB.log('FB.init() called without an apiKey.');
-      return;
-    }
-
     // only need to list values here that do not already have a falsy default.
     // this is why cookie/session/status are not listed here.
     FB.copy(options, {
       logging: true
     });
 
-    FB._apiKey = options.apiKey;
+    FB._apiKey = options.appId || options.apiKey;
 
     // disable logging if told to do so, but only if the url doesnt have the
     // token to turn it on. this allows for easier debugging of third party
@@ -125,20 +140,22 @@ FB.provide('', {
       FB._logging = false;
     }
 
-    // enable cookie support if told to do so
-    FB.Cookie.setEnabled(options.cookie);
+    if (FB._apiKey) {
+      // enable cookie support if told to do so
+      FB.Cookie.setEnabled(options.cookie);
 
-    // if an explicit session was not given, try to _read_ an existing cookie.
-    // we dont enable writing automatically, but we do read automatically.
-    options.session = options.session || FB.Cookie.load();
+      // if an explicit session was not given, try to _read_ an existing cookie.
+      // we dont enable writing automatically, but we do read automatically.
+      options.session = options.session || FB.Cookie.load();
 
-    // set the session
-    FB.Auth.setSession(options.session,
-                       options.session ? 'connected' : 'unknown');
+      // set the session
+      FB.Auth.setSession(options.session,
+                         options.session ? 'connected' : 'unknown');
 
-    // load a fresh session if requested
-    if (options.status) {
-      FB.getLoginStatus();
+      // load a fresh session if requested
+      if (options.status) {
+        FB.getLoginStatus();
+      }
     }
 
     // weak dependency on XFBML
@@ -147,7 +164,7 @@ FB.provide('', {
       // finished executing
       window.setTimeout(function() {
         if (FB.XFBML) {
-          FB.XFBML.parse();
+          FB.Dom.ready(FB.XFBML.parse);
         }
       }, 0);
     }
@@ -159,26 +176,4 @@ FB.provide('', {
 // we do it in a setTimeout to wait until the current event loop as finished.
 // this allows potential library code being included below this block (possible
 // when being served from an automatically combined version)
-//
-// Usage:
-//
-//  <div id="fb-root"></div>
-//  <script>
-//    window.fbAsyncInit = function() {
-//      FB.init({
-//        apiKey: '6a25de06224e9b21a2b33fcdae593daa',
-//        status: true
-//      });
-//      FB.XFBML.parse();
-//    };
-//
-//    (function() {
-//      var e = document.createElement('script');
-//      e.type = 'text/javascript';
-//      e.src = 'http://static.ak.fbcdn.net/connect/en_US/core.js';
-//      e.async = true;
-//      document.getElementById('fb-root').appendChild(e);
-//    }());
-//  </script>
-//
 window.setTimeout(function() { if (window.fbAsyncInit) { fbAsyncInit(); }}, 0);

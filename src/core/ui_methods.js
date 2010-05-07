@@ -25,9 +25,10 @@
  * In the UIServer enabled world, we should not need the URL.
  */
 FB.provide('UIServer.Methods', {
-  'friend.add': {
-    size     : { width: 575, height: 240 },
-    url      : 'addfriend.php'
+  'friends.add': {
+    size      : { width: 575, height: 240 },
+    url       : 'connect/uiserver.php',
+    transform : FB.UIServer.genericTransform
   },
 
   'stream.publish': {
@@ -76,20 +77,12 @@ FB.provide('UIServer.Methods', {
   'bookmark.add': {
     size      : { width: 460, height: 226 },
     url       : 'connect/uiserver.php',
-    transform : function(call) {
-      // most of connect uses display=dialog, but uiserver uses display=iframe.
-      // the latter is better, and once we have more stuff on it, we'll change
-      // the default behaviour to be this, instead of needing a transform
-      // similarly most dialogs use channel_url, not channel
-      if (call.params.display == 'dialog') {
-        call.params.display = 'iframe';
-        call.params.channel = FB.UIServer._xdChannelHandler(
-          call.id,
-          'parent.parent'
-        );
-      }
-      return call;
-    }
+    transform : FB.UIServer.genericTransform
+  },
+
+  'profile.addtab': {
+    size      : { width: 460, height: 226 },
+    url       : 'connect/uiserver.php',
+    transform : FB.UIServer.genericTransform
   }
 });
-

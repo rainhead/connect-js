@@ -16,76 +16,11 @@
  * @provides fb.tests.xfbmltags
  * @requires fb.tests.qunit
  *           fb.xfbml
+ *           fb.tests.xfbmltest
  */
 ////////////////////////////////////////////////////////////////////////////////
 module('xfbmltags');
 ////////////////////////////////////////////////////////////////////////////////
-
-/**
- * Bag for testing XFBML.
- *
- * @param {String} xfbml  takes an xfbml string
- * @param {Function} cb   callback, takes the html as a param
- */
-XTest = {
-  /**
-   * Define how many XFBML comparisons will be executed
-   * in this test.
-   *
-   * The base QUnit expect() doesn't work here because
-   * we want to call start() after all tags have finished,
-   * but no later. We can't do them sequentially because
-   * it would take too long.
-   */
-  expect : function(count) {
-    XTest.remaining = count;
-    expect(count);
-
-    if (XTest.interval) {
-      ok(false, "previous interval was not cleared");
-      clearInterval(XTest.interval);
-    }
-
-    XTest.interval =
-      setInterval(function() {
-                  if (XTest.remaining <= 0) {
-                    if (XTest.remaining < 0) {
-                      ok(false, "more tags than expected");
-                    }
-                    start();
-                    clearInterval(XTest.interval);
-                    XTest.interval = null;
-                  }
-                }, 200);
-    stop();
-  },
-
-  /**
-   * Compare the output of an XFBML string with a regular
-   * expression.
-   *
-   * Because different browsers have different capitalizations of
-   * their HTML output, by default the comparison is case
-   * insensitive.
-   */
-  regex : function(xfbml, html_regex, case_sensitive) {
-    var container = FB.Content.append(xfbml);
-    FB.XFBML.parse(container, function() {
-      var html = container.childNodes[0].innerHTML;
-      if (!case_sensitive) {
-        html = html.toLowerCase();
-        html_regex = html_regex.toLowerCase();
-      }
-      var regex = RegExp(html_regex);
-      ok(regex.test(html), "match regex " + html_regex + " with " + html);
-      container.parentNode.removeChild(container); // clean up
-      --XTest.remaining;
-    });
-  },
-
-  remaining : 0,
-  interval  : null
-};
 
 test(
   'fb:profile-pic',
@@ -172,7 +107,7 @@ test(
     XTest.expect(1);
     XTest.regex(
       '<fb:login></fb:login>',
-      'iframe.*widgets/login.php'
+      'iframe.*plugins/login.php'
     );
   }
 );
@@ -193,7 +128,19 @@ test(
     XTest.expect(1);
     XTest.regex(
       '<fb:fan name="platform"></fb:fan>',
-      'iframe.*widgets/fan.php'
+      'iframe.*plugins/fan.php'
+    );
+  }
+);
+
+test(
+  'fb:like-box',
+
+  function() {
+    XTest.expect(1);
+    XTest.regex(
+      '<fb:fan name="platform"></fb:fan>',
+      'iframe.*plugins/likebox.php'
     );
   }
 );
@@ -205,7 +152,7 @@ test(
     XTest.expect(1);
     XTest.regex(
       '<fb:activity site="cnn.com"></fb:activity>',
-      'iframe.*widgets/activity.php'
+      'iframe.*plugins/activity.php'
     );
   }
 );
@@ -217,7 +164,7 @@ test(
     XTest.expect(1);
     XTest.regex(
       '<fb:recommendations site="cnn.com"></fb:recommendations>',
-      'iframe.*widgets/recommendations.php'
+      'iframe.*plugins/recommendations.php'
     );
   }
 );
@@ -229,7 +176,7 @@ test(
     XTest.expect(1);
     XTest.regex(
       '<fb:live-stream></fb:live-stream>',
-      'iframe.*widgets/livefeed.php'
+      'iframe.*plugins/livefeed.php'
     );
   }
 );
@@ -241,7 +188,7 @@ test(
     XTest.expect(1);
     XTest.regex(
       '<fb:serverfbml fbml="hello world"></fb:serverfbml>',
-      'iframe.*render_fbml.php'
+      'iframe.*serverfbml.php'
     );
   }
 );

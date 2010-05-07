@@ -1,9 +1,9 @@
 /**
  * A meta component which requires everything.
  *
- * @provides fb.all
+ * @provides fb.graph
  * @requires
- *   fb.api
+ *   fb.api_graph
  *   fb.auth
  *   fb.data
  *   fb.init

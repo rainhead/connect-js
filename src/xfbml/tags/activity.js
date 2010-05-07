@@ -29,15 +29,23 @@ FB.subclass('XFBML.Activity', 'XFBML.IframeWidget', null, {
   _visibleAfter: 'load',
 
   /**
+   * Refresh the iframe on auth.statusChange events.
+   */
+  _refreshOnAuthChange: true,
+
+  /**
    * Do initial attribute processing.
    */
   setupAndValidate: function() {
     this._attr = {
-      api_key : FB._apiKey,
-      header  : this._getBoolAttribute('header'),
-      width   : this._getPxAttribute('width', 300),
-      height  : this._getPxAttribute('height', 300),
-      site    : this.getAttribute('site', location.hostname)
+      border_color    : this.getAttribute('border-color'),
+      colorscheme     : this.getAttribute('color-scheme'),
+      font            : this.getAttribute('font'),
+      header          : this._getBoolAttribute('header'),
+      height          : this._getPxAttribute('height', 300),
+      recommendations : this._getBoolAttribute('recommendations'),
+      site            : this.getAttribute('site', location.hostname),
+      width           : this._getPxAttribute('width', 300)
     };
 
     return true;
@@ -53,12 +61,11 @@ FB.subclass('XFBML.Activity', 'XFBML.IframeWidget', null, {
   },
 
   /**
-   * Get the URL for the iframe.
+   * Get the URL bits for the iframe.
    *
-   * @return {String} the iframe URL
+   * @return {Object} the iframe URL bits
    */
-  getIframeUrl: function() {
-    return FB._domain.www + 'widgets/activity.php?' + FB.QS.encode(this._attr);
+  getUrlBits: function() {
+    return { name: 'activity', params: this._attr };
   }
 });
-

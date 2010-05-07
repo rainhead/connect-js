@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * @provides fb.xfbml.fan
+ * @provides fb.xfbml.likebox
  * @layer xfbml
  * @requires fb.type fb.xfbml.iframewidget
  */
 
 /**
- * Implementation for fb:fan tag.
+ * Implementation for fb:like-box tag.
  *
- * @class FB.XFBML.Fan
+ * @class FB.XFBML.LikeBox
  * @extends FB.XFBML.IframeWidget
  * @private
  */
-FB.subclass('XFBML.Fan', 'XFBML.IframeWidget', null, {
+FB.subclass('XFBML.LikeBox', 'XFBML.IframeWidget', null, {
   _visibleAfter: 'load',
 
   /**
@@ -38,7 +38,7 @@ FB.subclass('XFBML.Fan', 'XFBML.IframeWidget', null, {
       css         : this.getAttribute('css'),
       height      : this.getAttribute('height'),
       id          : this.getAttribute('profile-id'),
-      logobar     : this._getBoolAttribute('logo-bar'),
+      header      : this._getBoolAttribute('header', true),
       name        : this.getAttribute('name'),
       stream      : this._getBoolAttribute('stream', true),
       width       : this._getPxAttribute('width', 300)
@@ -46,7 +46,7 @@ FB.subclass('XFBML.Fan', 'XFBML.IframeWidget', null, {
 
     // "id" or "name" is required
     if (!this._attr.id && !this._attr.name) {
-      FB.log('<fb:fan> requires one of the "id" or "name" attributes.');
+      FB.log('<fb:like-box> requires one of the "id" or "name" attributes.');
       return false;
     }
 
@@ -54,18 +54,23 @@ FB.subclass('XFBML.Fan', 'XFBML.IframeWidget', null, {
     if (!height) {
       if ((!this._attr.connections || this._attr.connections === '0') &&
           !this._attr.stream) {
-        height = 65;
-      } else if (!this._attr.connections || this._attr.connections === '0') {
-        height = 375;
-      } else if (!this._attr.stream) {
-        height = 250;
+        height = 62;
       } else {
-        height = 550;
+        height = 95;
+
+        if (this._attr.connections && this._attr.connections !== '0') {
+          height += 160;
+        }
+
+        if (this._attr.stream) {
+          height += 300;
+        }
+
+        // add space for header
+        if (this._attr.header && this._attr.header !== '0') {
+         height += 32;
+        }
       }
-    }
-    // add space for logobar
-    if (this._attr.logobar) {
-      height += 25;
     }
 
     this._attr.height = height;
@@ -87,6 +92,6 @@ FB.subclass('XFBML.Fan', 'XFBML.IframeWidget', null, {
    * @return {Object} the iframe URL bits
    */
   getUrlBits: function() {
-    return { name: 'fan', params: this._attr };
+    return { name: 'likebox', params: this._attr };
   }
 });

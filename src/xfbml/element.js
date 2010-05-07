@@ -51,7 +51,11 @@ FB.Class('XFBML.Element',
    * @return {Object} final value
    */
   getAttribute: function(name, defaultValue, transform) {
-    var value = this.dom.getAttribute(name);
+    var value = (
+      this.dom.getAttribute(name) ||
+      this.dom.getAttribute(name.replace(/-/g, '_')) ||
+      this.dom.getAttribute(name.replace(/-/g, ''))
+    );
     return value ? (transform ? transform(value) : value) : defaultValue;
   },
 
@@ -65,7 +69,7 @@ FB.Class('XFBML.Element',
   _getBoolAttribute: function(name, defaultValue) {
     return this.getAttribute(name, defaultValue, function(s) {
       s = s.toLowerCase();
-      return s == 'true' || s == '1' || s == 'yes';
+      return s == 'true' || s == '1' || s == 'yes' || s == 'on';
     });
   },
 

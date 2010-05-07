@@ -15,7 +15,12 @@
  *
  * @provides fb.xfbml.iframewidget
  * @layer xfbml
- * @requires fb.type fb.event fb.xfbml.element fb.css.iframewidget
+ * @requires fb.type
+ *           fb.event
+ *           fb.xfbml.element
+ *           fb.content
+ *           fb.qs
+ *           fb.css.iframewidget
  */
 
 /**
@@ -59,12 +64,18 @@ FB.subclass('XFBML.IframeWidget', 'XFBML.Element', null, {
   /////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Implemented by the inheriting class to return the URL for the iframe.
+   * Implemented by the inheriting class to return a **name** and **params**.
    *
-   * @return {String} the iframe URL
+   * The name is the the file name in the plugins directory. So the name "fan"
+   * translates to the path "/plugins/fan.php". This enforces consistency.
+   *
+   * The params should be the query params needed for the widget. API Key,
+   * Session Key, SDK and Locale are automatically included.
+   *
+   * @return {Object} an object containing a **name** and **params**.
    */
-  getIframeUrl: function() {
-    throw new Error('Inheriting class needs to implement getIframeUrl().');
+  getUrlBits: function() {
+    throw new Error('Inheriting class needs to implement getUrlBits().');
   },
 
   /////////////////////////////////////////////////////////////////////////////
@@ -175,16 +186,28 @@ FB.subclass('XFBML.IframeWidget', 'XFBML.Element', null, {
     }
 
     // it's always hidden by default
-    FB.Dom.addCss(this.dom, 'FB_HideIframes');
+    FB.Dom.addCss(this.dom, 'fb_iframe_widget');
+    if (this._visibleAfter != 'immediate') {
+      FB.Dom.addCss(this.dom, 'fb_hide_iframes');
+    } else {
+      this.subscribe('iframe.onload', FB.bind(this.fire, this, 'render'));
+    }
 
     // the initial size
     var size = this.getSize() || {};
 
-    // we will append "sdk=joey" to the query parameters if it looks like a
-    // URL with query params
-    var url = this.getIframeUrl();
-    if (url.indexOf('http') === 0 && url.indexOf('?') > -1) {
-      url += '&sdk=joey';
+    // we use a GET request if the URL is less than 2k, otherwise we need to do
+    // a <form> POST. we prefer a GET because it prevents the "POST resend"
+    // warning browsers shown on page refresh.
+    var url = this._getURL() + '?' + FB.QS.encode(this._getQS());
+    if (url.length > 2000) {
+      // we will POST the form once the empty about:blank iframe is done loading
+      url = 'about:blank';
+      var onload = FB.bind(function() {
+        this._postRequest();
+        this.unsubscribe('iframe.onload', onload);
+      }, this);
+      this.subscribe('iframe.onload', onload);
     }
 
     FB.Content.insertIframe({
@@ -217,7 +240,7 @@ FB.subclass('XFBML.IframeWidget', 'XFBML.Element', null, {
 
     // setup forwarding of auth.statusChange events
     if (this._refreshOnAuthChange) {
-      this._setupAuthNotify();
+      this._setupAuthRefresh();
     }
 
     // if we need to make it visible on iframe load
@@ -234,30 +257,32 @@ FB.subclass('XFBML.IframeWidget', 'XFBML.Element', null, {
    */
   _makeVisible: function() {
     this._removeLoader();
-    FB.Dom.removeCss(this.dom, 'FB_HideIframes');
+    FB.Dom.removeCss(this.dom, 'fb_hide_iframes');
     this.fire('render');
   },
 
   /**
-   * Most iframe widgets do not tie their internal state to the "Connected"
+   * Most iframe plugins do not tie their internal state to the "Connected"
    * state of the application. In other words, the fan box knows who you are
-   * even if the page it contains does not. These widgets therefore only need
+   * even if the page it contains does not. These plugins therefore only need
    * to reload when the user signs in/out of facebook, not the application.
    *
    * This misses the case where the user switched logins without the
    * application knowing about it. Unfortunately this is not possible/allowed.
    */
-  _setupAuthNotify: function() {
-    var lastStatus = FB._userStatus;
-    FB.Event.subscribe('auth.statusChange', FB.bind(function(response) {
-      if (!this.isValid()) {
-        return;
-      }
-      // if we gained or lost a user, reprocess
-      if (lastStatus == 'unknown' || response.status == 'unknown') {
-        this.process(true);
-      }
-      lastStatus = response.status;
+  _setupAuthRefresh: function() {
+    FB.getLoginStatus(FB.bind(function(response) {
+      var lastStatus = response.status;
+      FB.Event.subscribe('auth.statusChange', FB.bind(function(response) {
+        if (!this.isValid()) {
+          return;
+        }
+        // if we gained or lost a user, reprocess
+        if (lastStatus == 'unknown' || response.status == 'unknown') {
+          this.process(true);
+        }
+        lastStatus = response.status;
+      }, this));
     }, this));
   },
 
@@ -282,7 +307,7 @@ FB.subclass('XFBML.IframeWidget', 'XFBML.Element', null, {
    */
   _addLoader: function() {
     if (!this._loaderDiv) {
-      FB.Dom.addCss(this.dom, 'FB_IframeLoader');
+      FB.Dom.addCss(this.dom, 'fb_iframe_widget_loader');
       this._loaderDiv = document.createElement('div');
       this._loaderDiv.className = 'FB_Loader';
       this.dom.appendChild(this._loaderDiv);
@@ -294,9 +319,44 @@ FB.subclass('XFBML.IframeWidget', 'XFBML.Element', null, {
    */
   _removeLoader: function() {
     if (this._loaderDiv) {
-      FB.Dom.removeCss(this.dom, 'FB_IframeLoader');
+      FB.Dom.removeCss(this.dom, 'fb_iframe_widget_loader');
       this.dom.removeChild(this._loaderDiv);
       this._loaderDiv = null;
     }
+  },
+
+  /**
+   * Get's the final QS/Post Data for the iframe with automatic params added
+   * in.
+   *
+   * @return {Object} the params object
+   */
+  _getQS: function() {
+    return FB.copy({
+      api_key     : FB._apiKey,
+      locale      : FB._locale,
+      sdk         : 'joey',
+      session_key : FB._session && FB._session.session_key
+    }, this.getUrlBits().params);
+  },
+
+  /**
+   * Gets the final URL based on the name specified in the bits.
+   *
+   * @return {String} the url
+   */
+  _getURL: function() {
+    return FB._domain.www + 'plugins/' + this.getUrlBits().name + '.php';
+  },
+
+  /**
+   * Will do the POST request to the iframe.
+   */
+  _postRequest: function() {
+    FB.Content.postTarget({
+      url    : this._getURL(),
+      target : this.getIframeNode().name,
+      params : this._getQS()
+    });
   }
 });
