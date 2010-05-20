@@ -43,6 +43,7 @@ FB.subclass('XFBML.ConnectBar', 'XFBML.Element', null, {
   _displayed: false, // is the bar currently displayed
   _notDisplayed: false, // is the bar currently not displayed
   _container: null,
+  _animationSpeed: 0, // default to no (zero time, instant) animation
 
   /**
    * Processes this tag.
@@ -57,7 +58,8 @@ FB.subclass('XFBML.ConnectBar', 'XFBML.Element', null, {
           FB.api({ // check if marked seen / current seen count
             method: 'Connect.shouldShowConnectBar'
           }, this.bind(function(showBar) {
-            if (showBar == true) {
+            if (showBar != 2) {
+              this._animationSpeed = (showBar == 0) ? 750 : 0;
               this._showBar();
             } else {
               this._noRender();
@@ -128,15 +130,17 @@ FB.subclass('XFBML.ConnectBar', 'XFBML.Element', null, {
     container.appendChild(bar);
     document.body.appendChild(container);
     this._container = container;
-    this._initialHeight = parseInt(FB.Dom.getStyle(container, 'height'), 10);
+    this._initialHeight = Math.round(
+              parseFloat(FB.Dom.getStyle(container, 'height')) +
+              parseFloat(FB.Dom.getStyle(container, 'borderBottomWidth')));
     bar.innerHTML = FB.String.format(
       '<div class="fb_buttons">' +
         '<a href="#" class="fb_bar_close">' +
-          '<img src="{1}" alt="{2}" title="{2}" class="fb_bar_close"/>' +
+          '<img src="{1}" alt="{2}" title="{2}"/>' +
         '</a>' +
       '</div>' +
       '<a href="{7}" class="fb_profile" target="_blank">' +
-        '<img src="{3}" alt="{4}" title="{4}" />' +
+        '<img src="{3}" alt="{4}" title="{4}"/>' +
       '</a>' +
       '{5}' +
       ' <span>' +
@@ -150,8 +154,7 @@ FB.subclass('XFBML.ConnectBar', 'XFBML.Element', null, {
       info.first_name,
       FB.Intl.tx('connect-bar:sentence', {
         firstName: info.first_name,
-        siteName: info.site_name,
-        logoUrl: FB._domain.cdn + FB.XFBML.ConnectBar.imgs.logoUrl
+        siteName: info.site_name
       }),
       FB.Intl.tx('connect-bar:learn-more'),
       info.profile_url,
@@ -162,15 +165,21 @@ FB.subclass('XFBML.ConnectBar', 'XFBML.Element', null, {
       el.onclick = FB.bind(_this._clickHandler, _this);
     });
     this._page = document.body;
-    var top_margin =
-      parseInt(FB.Dom.getStyle(this._page, 'marginTop'), 10);
+    var top_margin = 0;
+    if (this._page.parentNode) {
+      top_margin = Math.round(
+        (parseFloat(FB.Dom.getStyle(this._page.parentNode, 'height')) -
+        parseFloat(FB.Dom.getStyle(this._page, 'height'))) / 2);
+    } else {
+      top_margin = parseInt(FB.Dom.getStyle(this._page, 'marginTop'), 10);
+    }
     top_margin = isNaN(top_margin) ? 0 : top_margin;
     this._initTopMargin = top_margin;
     if (!window.XMLHttpRequest) { // ie6
       container.className += " fb_connect_bar_container_ie6";
     } else {
       container.style.top = (-1*this._initialHeight) + 'px';
-      FB.Anim.ate(container, { top: '0px' });
+      FB.Anim.ate(container, { top: '0px' }, this._animationSpeed);
     }
     var move = { marginTop: this._initTopMargin + this._initialHeight + 'px' }
     if (FB.Dom.getBrowserType() == 'ie') { // for ie
@@ -178,7 +187,7 @@ FB.subclass('XFBML.ConnectBar', 'XFBML.Element', null, {
     } else { // for others
       move.backgroundPosition = '? ' + this._initialHeight + 'px'
     }
-    FB.Anim.ate(this._page, move);
+    FB.Anim.ate(this._page, move, this._animationSpeed);
   },
 
   /**
@@ -188,6 +197,7 @@ FB.subclass('XFBML.ConnectBar', 'XFBML.Element', null, {
   _clickHandler : function(e) {
     e = e || window.event;
     var el = e.target || e.srcElement;
+    while (el.nodeName != 'A') { el = el.parentNode; }
     switch (el.className) {
       case 'fb_bar_close':
         FB.api({ // mark seen
@@ -201,8 +211,10 @@ FB.subclass('XFBML.ConnectBar', 'XFBML.Element', null, {
         break;
       case 'fb_learn_more':
       case 'fb_profile':
-        return true;
+        window.open(el.href);
+        break;
       case 'fb_no_thanks':
+        this._closeConnectBar();
         FB.api({ // mark seen
           method: 'Connect.connectBarMarkAcknowledged'
         });
@@ -231,10 +243,11 @@ FB.subclass('XFBML.ConnectBar', 'XFBML.Element', null, {
     } else { // for others
       move.backgroundPosition = '? 0px'
     }
-    FB.Anim.ate(this._page, move, 300);
+    var speed = (this._animationSpeed == 0) ? 0 : 300;
+    FB.Anim.ate(this._page, move, speed);
     FB.Anim.ate(this._container, {
       top: (-1 * this._initialHeight) + 'px'
-    }, 300, function(el) {
+    }, speed, function(el) {
       el.parentNode.removeChild(el);
     });
     this.fire('connectbar.onclose');
@@ -245,7 +258,6 @@ FB.subclass('XFBML.ConnectBar', 'XFBML.Element', null, {
 
 FB.provide('XFBML.ConnectBar', {
   imgs: {
-   logoUrl: 'images/facebook-widgets/fb_logo.png',
    buttonUrl: 'images/facebook-widgets/close_btn.png'
   }
 });
