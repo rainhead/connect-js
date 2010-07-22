@@ -68,6 +68,9 @@ if (!window.FB) {
     // logging is enabled by default. this is the logging shown to the
     // developer and not at all noisy.
     _logging: true,
+    _inCanvas: (
+      (window.location.search.indexOf('fb_sig_in_iframe=1') > -1) ||
+      (window.location.search.indexOf('session=') > -1)),
 
 
     //
@@ -81,6 +84,7 @@ if (!window.FB) {
                    ? 'https://s-static.ak.fbcdn.net/'
                    : 'http://static.ak.fbcdn.net/'),
       graph    : 'https://graph.facebook.com/',
+      staticfb : 'http://static.ak.facebook.com/',
       www      : window.location.protocol + '//www.facebook.com/'
     },
     _locale: null,
@@ -90,7 +94,7 @@ if (!window.FB) {
     /**
      * Copies things from source into target.
      *
-     * @access protected
+     * @access private
      * @param target    {Object}  the target object where things will be copied
      *                            into
      * @param source    {Object}  the source object where things will be copied
